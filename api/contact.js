@@ -1,35 +1,27 @@
-import nodemailer from 'nodemailer';
+// api/contact.js
+const nodemailer = require('nodemailer');
 
-export default async function handler(req, res) {
-    if (req.method === 'POST') {
-        const { name, email, message } = req.body;
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // or another email service provider
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
 
-        // Create a transporter
-        const transporter = nodemailer.createTransport({
-            service: 'gmail', // You can use any other service
-            auth: {
-                user: process.env.EMAIL_USER, // Your email address
-                pass: process.env.EMAIL_PASS  // Your email password
-            }
-        });
+module.exports = async (req, res) => {
+  const { to, subject, text } = req.body;
 
-        // Prepare the email content
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'Thank You for Contacting Us!',
-            text: `Hi ${name},\n\nThank you for reaching out. We have received your message: "${message}".\n\nWe will get back to you shortly.\n\nBest regards,\nYour Company Name`
-        };
-
-        try {
-            // Send the email
-            await transporter.sendMail(mailOptions);
-            res.status(200).json({ message: 'Email sent successfully!' });
-        } catch (error) {
-            console.error('Error sending email:', error);
-            res.status(500).json({ message: 'Failed to send email.' });
-        }
-    } else {
-        res.status(405).json({ message: 'Method not allowed' });
-    }
-}
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      text
+    });
+    res.status(200).json({ message: 'Email sent successfully.' });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ message: 'Failed to send email.' });
+  }
+};
